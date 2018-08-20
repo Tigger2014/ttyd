@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <uv.h>
 
 // client message
 #define INPUT '0'
@@ -15,8 +16,6 @@
 
 // websocket url path
 #define WS_PATH "/ws"
-
-#define BUF_SIZE 32768 // 32K
 
 extern volatile bool force_exit;
 extern struct lws_context *context;
@@ -42,11 +41,13 @@ struct tty_client {
     int pid;
     int pty;
     enum pty_state state;
-    char pty_buffer[LWS_PRE + 1 + BUF_SIZE];
+    char *pty_buffer;
     ssize_t pty_len;
-    pthread_t thread;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    uv_thread_t thread;
+    uv_mutex_t mutex;
+    uv_cond_t cond;
+    uv_pipe_t pipe;
+    uv_loop_t *loop;
 
     LIST_ENTRY(tty_client) list;
 };
@@ -74,7 +75,8 @@ struct tty_server {
     int max_clients;                          // maximum clients to support
     bool once;                                // whether accept only one client and exit on disconnection
     char socket_path[255];                    // UNIX domain socket path
-    pthread_mutex_t mutex;
+    uv_mutex_t mutex;
+    uv_loop_t *loop;
 };
 
 extern int
