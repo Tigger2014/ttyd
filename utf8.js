@@ -68,51 +68,6 @@ UTF8Decoder.prototype.decode = function(str) {
     return ret;
 };
 
-Terminal.prototype.decodeUTF8 = function(str) {
-    return (new UTF8Decoder()).decode(str);
-};
-
-Terminal.prototype.encodeUTF8 = function(str) {
-    var ret = '';
-    for (var i = 0; i < str.length; i++) {
-        var c = str.charCodeAt(i);
-        if (0xDC00 <= c && c <= 0xDFFF) {
-            c = 0xFFFD;
-        } else if (0xD800 <= c && c <= 0xDBFF) {
-            if (i+1 < str.length) {
-                var d = str.charCodeAt(i+1);
-                if (0xDC00 <= d && d <= 0xDFFF) {
-                    c = 0x10000 + ((c & 0x3FF) << 10) + (d & 0x3FF);
-                    i++;
-                } else {
-                    c = 0xFFFD;
-                }
-            } else {
-                c = 0xFFFD;
-            }
-        }
-        var bytesLeft;
-        if (c <= 0x7F) {
-            ret += str.charAt(i);
-            continue;
-        } else if (c <= 0x7FF) {
-            ret += String.fromCharCode(0xC0 | (c >>> 6));
-            bytesLeft = 1;
-        } else if (c <= 0xFFFF) {
-            ret += String.fromCharCode(0xE0 | (c >>> 12));
-            bytesLeft = 2;
-        } else {
-            ret += String.fromCharCode(0xF0 | (c >>> 18));
-            bytesLeft = 3;
-        }
-        while (bytesLeft > 0) {
-            bytesLeft--;
-            ret += String.fromCharCode(0x80 | ((c >>> (6 * bytesLeft)) & 0x3F));
-        }
-    }
-    return ret;
-};
-
-Terminal.prototype.writeUTF8 = function (str) {
+writeUTF8 = function (str) {
     this.write(this.decodeUTF8(str));
 };
