@@ -68,6 +68,6 @@ UTF8Decoder.prototype.decode = function(str) {
     return ret;
 };
 
-writeUTF8 = function (str) {
+Terminal.prototype.writeUTF8 = function (str) {
     this.write(this.decodeUTF8(str));
 };
